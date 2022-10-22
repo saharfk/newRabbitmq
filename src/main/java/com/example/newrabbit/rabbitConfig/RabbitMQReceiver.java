@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 public class RabbitMQReceiver {
     private static Logger logger = LogManager.getLogger(RabbitMQReceiver.class.toString());
     @RabbitHandler
-    public void receiver(MenuOrder menuOrder) {
-        logger.info("MenuOrder listener invoked - Consuming Message with MenuOrder Identifier : " + menuOrder.getOrderIdentifier());
+    public void receiver(String log) {
+        logger.info("MenuOrder listener invoked - Consuming Message with MenuOrder Identifier : " + log);
     }
 }

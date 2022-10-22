@@ -14,8 +14,8 @@ public class RabbitMQSender {
     @Autowired
     private Queue queue;
     private static Logger logger = LogManager.getLogger(RabbitMQSender.class.toString());
-    public void send(MenuOrder menuOrder) {
-        rabbitTemplate.convertAndSend(queue.getName(), menuOrder);
-        logger.info("Sending Message to the Queue : " + menuOrder.toString());
+    public void send(String log) {
+        rabbitTemplate.convertAndSend(queue.getName(), log);
+        logger.info("Sending Message to the Queue : " + log);
     }
 }
