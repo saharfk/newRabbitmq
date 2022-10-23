@@ -1,4 +1,5 @@
 package com.example.newrabbit.rabbitConfig;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,8 +15,11 @@ import org.springframework.amqp.rabbit.support.ListenerExecutionFailedException;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.*;
 import org.springframework.util.ErrorHandler;
+import org.springframework.web.client.RestTemplate;
+
 @EnableRabbit
 @Configuration
 public class RabbitAutoConfiguration {
@@ -31,40 +35,54 @@ public class RabbitAutoConfiguration {
     private String password;
     @Value("${rabbitmq.host}")
     private String host;
-    @Value("${rabbitmq.virtualhost}")
-    private String virtualHost;
     @Value("${rabbitmq.reply.timeout}")
     private Integer replyTimeout;
     @Value("${rabbitmq.concurrent.consumers}")
     private Integer concurrentConsumers;
     @Value("${rabbitmq.max.concurrent.consumers}")
     private Integer maxConcurrentConsumers;
+    @Value("${rabbit.url}")
+    private String rabbitUrl;
+
+    public String getRabbitUrl() {
+        return rabbitUrl;
+    }
+
+    public void setRabbitUrl(String rabbitUrl) {
+        this.rabbitUrl = rabbitUrl;
+    }
+
     @Bean
     public Queue queue() {
         return new Queue(queueName, false);
     }
+
+
     @Bean
     public DirectExchange exchange() {
         return new DirectExchange(exchange);
     }
+
     @Bean
     public Binding binding(Queue queue, DirectExchange exchange) {
         return BindingBuilder.bind(queue).to(exchange).with(routingkey);
     }
+
     @Bean
     public MessageConverter jsonMessageConverter() {
         ObjectMapper objectMapper = new ObjectMapper();
         return new Jackson2JsonMessageConverter(objectMapper);
     }
+
     @Bean
     public ConnectionFactory connectionFactory() {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
-        connectionFactory.setVirtualHost(virtualHost);
         connectionFactory.setHost(host);
         connectionFactory.setUsername(username);
         connectionFactory.setPassword(password);
         return connectionFactory;
     }
+
     @Bean
     public AmqpTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
         final RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
@@ -75,10 +93,12 @@ public class RabbitAutoConfiguration {
         rabbitTemplate.setUseDirectReplyToContainer(false);
         return rabbitTemplate;
     }
+
     @Bean
     public AmqpAdmin amqpAdmin() {
         return new RabbitAdmin(connectionFactory());
     }
+
     @Bean
     public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory() {
         final SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
@@ -89,12 +109,15 @@ public class RabbitAutoConfiguration {
         factory.setErrorHandler(errorHandler());
         return factory;
     }
+
     @Bean
     public ErrorHandler errorHandler() {
         return new ConditionalRejectingErrorHandler(new MyFatalExceptionStrategy());
     }
+
     public static class MyFatalExceptionStrategy extends ConditionalRejectingErrorHandler.DefaultExceptionStrategy {
         private final Logger logger = LogManager.getLogger(getClass());
+
         @Override
         public boolean isFatal(Throwable t) {
             if (t instanceof ListenerExecutionFailedException) {
@@ -106,4 +129,10 @@ public class RabbitAutoConfiguration {
             return super.isFatal(t);
         }
     }
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplateBuilder().build();
+    }
+
 }
